@@ -6,14 +6,16 @@
 
 } */
 
+
+
 .search {
   
   width:100%;
   display:flex;
   justify-content:center;
   align-items:center;
-  gap:10px;
-  margin:40px 0;       /* space from header and listings */
+  gap:5px;
+  margin:0;       /* space from header and listings */
 }
 
 .search input {
@@ -29,12 +31,12 @@
   padding: 12px 20px;
   border: none;
   border-radius: 8px;
-  background-color: #1a73e8;
+  background-color: grey;
   color: white;
   font-size: 16px;
   cursor: pointer;
 }
 
 .search button:hover {
-  background-color: #0f5bd3;
+  background-color: #424b54;
 }

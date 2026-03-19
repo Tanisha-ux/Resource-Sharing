@@ -74,9 +74,12 @@ function UploadResource(){
 
   return (
     <div className="upload-container">
-  <h2>Upload Product</h2>
+    {/* <h2>Upload Product</h2> */}
 
   <form className="upload-form" onSubmit={handleSubmit}>
+  <h2 className="upload-title">
+      Upload <span>Product</span>
+    </h2>
 
     <input
       type="text"

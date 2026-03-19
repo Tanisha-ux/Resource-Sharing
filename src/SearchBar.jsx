@@ -2,6 +2,8 @@ import React from 'react'
 import { useState } from "react";
 import "./SearchBar.css";
 import "./index.css";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons';
 
 
 const SearchBar = ({onSearch}) => {
@@ -14,6 +16,7 @@ const SearchBar = ({onSearch}) => {
   };
 
   return (
+    <div className="search-div">
     <form className="search" onSubmit={handleSubmit}>
 
       <input
@@ -24,10 +27,12 @@ const SearchBar = ({onSearch}) => {
       />
 
       <button type="submit">
-        Search
+      <FontAwesomeIcon icon={faMagnifyingGlass} size="lg" style={{ color: "white" }}/>
+        
       </button>
 
     </form>
+    </div>
   )
 }
 
