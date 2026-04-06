@@ -18,6 +18,10 @@ function Login() {
       const res=await API.post("/api/login",{email,password});
       
       localStorage.setItem("token", res.data.token);
+      localStorage.setItem("role", res.data.role);
+
+      window.dispatchEvent(new Event("login"));
+      // setIsLoggedIn(true);
 
       if (res.data.role === "admin") {
         navigate("/admin");
@@ -49,16 +53,25 @@ function Login() {
             placeholder="Email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            autoComplete="off"
           />
+
+          
 
           <input
             type="password"
             placeholder="Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            autoComplete="new-password"
           />
+
+          <div className="forgot-password">
+            <Link to="/forgot-password">Forgot Password?</Link>
+          </div>
           
           <button type="submit">Login</button>
+          
           
 
         </form>
@@ -66,6 +79,7 @@ function Login() {
         <p>
           Don't have an account? <Link to="/signup">Sign Up</Link>
         </p>
+        
 
       </div>
     </div>

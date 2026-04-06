@@ -7,9 +7,12 @@ import multer from "multer";
 import jwt from "jsonwebtoken";
 import path from "path";
 import { fileURLToPath } from "url";
-import Product from "../models/productModel.js";
-import Category from "../models/CategoryModel.js";
-import User from "../models/UserModel.js";
+import Product from "./models/productModel.js";
+import Category from "./models/CategoryModel.js";
+import User from "./models/UserModel.js";
+import crypto from "crypto"; 
+import nodemailer from "nodemailer";
+import bcrypt from "bcrypt";
 const JWT_SECRET = process.env.JWT_SECRET;
 
 const app = express();
@@ -31,6 +34,16 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 mongoose.connect(process.env.MONGO_URI)
 .then(() => console.log("✅ MongoDB Connected"))
 .catch(err => console.log("❌ DB Error:", err));
+
+
+
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
+});
 
 // =====================
 // MULTER CONFIG
@@ -275,49 +288,146 @@ app.post("/api/signup",async(req,res)=>{
   }
 });
 
-app.post("/api/login",async(req,res)=>{
-  try{
-    const{email,password}=req.body;
+app.post("/api/login", async (req, res) => {
+  try {
+    const { email, password } = req.body;
 
-    const user=await User.findOne({email});
+    const user = await User.findOne({ email });
 
-    if(!user){
-      
+    if (!user) {
       return res.status(400).json({ message: "User not found" });
     }
 
-    
+    const isMatch = await bcrypt.compare(password, user.password);
 
-    if(user.password!=password){
-      
+    if (!isMatch) {
       return res.status(400).json({ message: "Invalid password" });
     }
 
-
-
     if (user.status === "blocked") {
-      
       return res.status(403).json({ message: "Account blocked by admin" });
     }
 
-    const token=jwt.sign(
+    const token = jwt.sign(
       { userId: user._id, role: user.role },
       JWT_SECRET,
       { expiresIn: "1d" }
     );
 
     res.json({
-      message:"Login successful",
+      message: "Login successful",
       token,
       role: user.role,
-      // userId: user._id
     });
 
-  }catch(e){
+  } catch (e) {
     console.log(e);
-    res.status(500).json({Message:"Login failed"});
+    res.status(500).json({ message: "Login failed" });
   }
-})
+});
+
+
+
+// FORGOT PASSWORD
+app.post("/api/forgot-password", async (req, res) => {
+  const { email } = req.body;
+
+  console.log("📩 Request received for:", email);
+
+  try {
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      console.log("❌ No user found");
+      return res.status(200).json({ message: "Reset link sent if email exists" });
+    }
+
+    // Generate token
+    const token = crypto.randomBytes(32).toString("hex");
+    user.resetPasswordToken = token;
+    user.resetPasswordExpires = Date.now() + 15 * 60 * 1000;
+    await user.save();
+
+    const resetUrl = `http://localhost:5173/reset-password/${token}`;
+    console.log("🔗 Reset URL:", resetUrl);
+
+    // 🔍 CHECK ENV
+    console.log("EMAIL_USER:", process.env.EMAIL_USER);
+    console.log("EMAIL_PASS:", process.env.EMAIL_PASS);
+
+    console.log("⚙️ Creating transporter...");
+
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+      },
+      tls: {
+        rejectUnauthorized: false
+      }
+    });
+
+    console.log("✅ Transporter created");
+
+    // 🔍 VERIFY CONNECTION
+    await transporter.verify();
+    console.log("✅ SMTP server is ready");
+
+    console.log("📤 Sending email...");
+
+    const info = await transporter.sendMail({
+      from: `"ResoShare" <${process.env.EMAIL_USER}>`,
+      to: user.email,
+      subject: "Password Reset",
+      html: `<p>Click <a href="${resetUrl}">here</a> to reset your password.</p>`
+    });
+
+    console.log("🎉 EMAIL SENT:", info);
+
+    res.status(200).json({ message: "Reset link sent if email exists" });
+
+  } catch (err) {
+    console.log("❌ ERROR OCCURRED:");
+    console.log(err);
+    console.log("MESSAGE:", err.message);
+  }
+});
+
+
+
+//Reset password
+app.post("/api/reset-password/:token", async (req, res) => {
+  try {
+    const { token } = req.params;
+    const { password } = req.body;
+
+    const user = await User.findOne({
+      resetPasswordToken: token,
+      resetPasswordExpires: { $gt: Date.now() }
+    });
+
+    if (!user) {
+      return res.status(400).json({ message: "Token invalid or expired" });
+    }
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+    user.password = hashedPassword;
+
+    // Clear token
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpires = undefined;
+
+    await user.save();
+
+    res.json({ message: "Password reset successful" });
+
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
 
 
 app.listen(5000, () => {

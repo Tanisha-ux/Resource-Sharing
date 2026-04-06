@@ -12,18 +12,27 @@ function UploadResource(){
   const [price, setPrice] = useState("");
   const [dateCreated, setDateCreated] = useState("");
   const [warranty, setWarranty] = useState("");
-  const [isAvailable, setIsAvailable] = useState("");
+  const [availabilityType, setAvailabilityType] = useState("");
   const [categories, setCategories] = useState([]);
   const [category,setCategory]= useState("");
   const [image, setImage] = useState(null);
 
 
+  // useEffect(() => {
+  // axios
+  //   .get("http://localhost:5000/api/categories")
+  //   .then((res) => setCategories(res.data))
+  //   .catch((err) => console.log(err));
+  // }, []);
+
   useEffect(() => {
-  axios
-    .get("http://localhost:5000/api/categories")
-    .then((res) => setCategories(res.data))
+  API.get("/api/categories")
+    .then((res) => {
+      console.log("CATEGORIES:", res.data); // 👈 DEBUG HERE
+      setCategories(res.data);              // 👈 DATA SET HERE
+    })
     .catch((err) => console.log(err));
-  }, []);
+}, []);
 
 
    const handleSubmit=async (e)=>{
@@ -35,7 +44,7 @@ function UploadResource(){
     formData.append("price", price);
     formData.append("dateCreated", dateCreated);
     formData.append("warranty", warranty);
-    formData.append("isAvailable", isAvailable);
+    formData.append("availabilityType", availabilityType);
     formData.append("category",category);
     
 
@@ -56,7 +65,7 @@ function UploadResource(){
       setPrice("");
       setDateCreated("");
       setWarranty("");
-      setIsAvailable(false);
+      setAvailabilityType("");
       setCategory("");
       setImage(null);
     }
@@ -128,14 +137,15 @@ function UploadResource(){
 
 
 
-    <label>
-      Available:
-      <input
-        type="checkbox"
-        checked={isAvailable}
-        onChange={(e) => setIsAvailable(e.target.checked)}
-      />
-    </label>
+    <select
+  value={availabilityType}
+  onChange={(e) => setAvailabilityType(e.target.value)}
+  required
+>
+  <option value="">Select To Sell/Rent</option>
+  <option value="rent">For Rent</option>
+  <option value="buy">For Sell</option>
+</select>
 
     
 

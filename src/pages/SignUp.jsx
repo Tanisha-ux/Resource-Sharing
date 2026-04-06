@@ -44,6 +44,7 @@ function SignUp(){
             placeholder="Full Name"
             value={name}
             onChange={(e)=>setName(e.target.value)}
+            autoComplete="off"
           />
 
           <input
@@ -52,6 +53,7 @@ function SignUp(){
             placeholder="Email"
             value={email}
             onChange={(e)=>setEmail(e.target.value)}
+            autoComplete="off"
           />
 
           <input
@@ -60,6 +62,7 @@ function SignUp(){
             placeholder="Password"
             value={password}
             onChange={(e)=>setPassword(e.target.value)}
+            autoComplete="new-password"
           />
 
           <button type="submit">Create Account</button>

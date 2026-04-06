@@ -8,6 +8,8 @@ import ResourceDetails from "./pages/ResourceDetails.jsx";
 import UpdateResource from "./pages/UpdateResource.jsx";
 import SignUp from "./pages/SignUp.jsx";
 import Login from "./pages/Login.jsx";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 
 import "./index.css";
 
@@ -24,6 +26,8 @@ function App() {
         <Route path="/update/:id" element={<UpdateResource/>} />
         <Route path="/signup" element={<SignUp/>} />
         <Route path="/login" element={<Login/>} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password/:token" element={<ResetPassword />} />
       </Routes>
 
       <Footer />

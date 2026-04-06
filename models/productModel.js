@@ -22,9 +22,10 @@ const productSchema = new mongoose.Schema({
     required: true,
   },
 
-  isAvailable: {
-    type: Boolean,
-    required: true,
+  availabilityType: {
+  type: [String],
+  enum: ["rent", "buy"],
+  required: true,
   },
 
   image: {
