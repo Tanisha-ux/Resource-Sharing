@@ -10,6 +10,7 @@ import SignUp from "./pages/SignUp.jsx";
 import Login from "./pages/Login.jsx";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
+import Cart from "./pages/Cart.jsx";
 
 import "./index.css";
 
@@ -28,6 +29,7 @@ function App() {
         <Route path="/login" element={<Login/>} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password/:token" element={<ResetPassword />} />
+        <Route path="/cart" element={<Cart/>}/>
       </Routes>
 
       <Footer />

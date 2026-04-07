@@ -42,6 +42,38 @@ function HomePage(){
       
     };
 
+    const addToCart = async (product) => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        alert("Please login first!");
+        return;
+      }
+
+      // For now, using first availability type if multiple
+      const availabilityType = Array.isArray(product.availabilityType)
+        ? product.availabilityType[0]
+        : product.availabilityType;
+
+      const res = await API.post(
+        "/api/cart/add",
+        {
+          productId: product._id,
+          quantity: 1,
+          availabilityType: availabilityType,
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      alert(res.data.message); // Success feedback
+    } catch (err) {
+      console.error(err);
+      alert("Failed to add to cart");
+    }
+  };
+
     return(
     <>
       <div className="search-wrapper">
@@ -63,7 +95,7 @@ function HomePage(){
                     </Link>
 
 
-                    <button>Add to cart</button>
+                    <button onClick={() => addToCart(product)}>Add to cart</button>
                 </div>
                 );
             })}

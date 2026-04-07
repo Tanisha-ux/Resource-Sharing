@@ -10,6 +10,8 @@ import { fileURLToPath } from "url";
 import Product from "./models/productModel.js";
 import Category from "./models/CategoryModel.js";
 import User from "./models/UserModel.js";
+
+import Cart from "./models/Cart.js";
 import crypto from "crypto"; 
 import nodemailer from "nodemailer";
 import bcrypt from "bcrypt";
@@ -426,6 +428,128 @@ app.post("/api/reset-password/:token", async (req, res) => {
   } catch (err) {
     console.log(err);
     res.status(500).json({ message: "Server error" });
+  }
+});
+
+
+// CART
+// Add a product to cart
+app.post("/api/cart/add", verifyToken, async (req, res) => {
+  try {
+    const { productId, quantity = 1, availabilityType } = req.body;
+    const userId = req.user.userId;
+
+    // Validate required fields
+    if (!productId || !availabilityType) {
+      return res.status(400).json({ message: "Product ID and availability type are required" });
+    }
+
+    // Find the product
+    const product = await Product.findById(productId);
+    if (!product) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+
+    // Find user's cart, or create a new one if it doesn't exist
+    let cart = await Cart.findOne({ user: userId });
+    if (!cart) {
+      cart = new Cart({ user: userId, items: [] });
+    }
+
+    // Check if product already exists in cart
+    const existingItemIndex = cart.items.findIndex(
+      item => item.product.toString() === productId && item.availabilityType === availabilityType
+    );
+
+    if (existingItemIndex >= 0) {
+      // If product exists, increase quantity
+      cart.items[existingItemIndex].quantity += quantity;
+    } else {
+      // Otherwise, add new item
+      cart.items.push({
+        product: productId,
+        quantity,
+        availabilityType,
+        price: product.price
+      });
+    }
+
+    await cart.save();
+    res.json({ message: "Product added to cart", cart });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Failed to add product to cart" });
+  }
+});
+
+
+// Get user cart
+app.get("/cart", verifyToken, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const cart = await Cart.findOne({ user: userId }).populate("items.product");
+
+    if (!cart || cart.items.length === 0) {
+      return res.json({ items: [] });
+    }
+
+    res.json(cart);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Failed to fetch cart" });
+  }
+});
+
+
+
+// Update quantity of an item in cart
+app.put("/api/cart/item/:itemId", verifyToken, async (req, res) => {
+  try {
+    const { itemId } = req.params;
+    const { quantity } = req.body;
+
+    const cart = await Cart.findOne({ user: req.user.userId });
+    if (!cart) return res.status(404).json({ message: "Cart not found" });
+
+    const item = cart.items.id(itemId);
+    if (!item) return res.status(404).json({ message: "Item not in cart" });
+
+    item.quantity = quantity;
+    await cart.save();
+
+    res.json({ message: "Cart updated", cart });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Failed to update quantity" });
+  }
+});
+
+// DELETE cart item
+app.delete("/api/cart/item/:itemId", verifyToken, async (req, res) => {
+  try {
+    const { itemId } = req.params;
+    const userId = req.user.userId;
+
+    // Find the cart for the logged-in user
+    const cart = await Cart.findOne({ user: userId });
+    if (!cart) return res.status(404).json({ message: "Cart not found" });
+
+    // Filter out the item to remove
+    const initialLength = cart.items.length;
+    cart.items = cart.items.filter(item => item._id.toString() !== itemId);
+
+    if (cart.items.length === initialLength) {
+      // No item was removed
+      return res.status(404).json({ message: "Item not found in cart" });
+    }
+
+    // Save updated cart
+    await cart.save();
+
+    res.json({ message: "Item removed from cart", cart });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Failed to remove item from cart" });
   }
 });
 
